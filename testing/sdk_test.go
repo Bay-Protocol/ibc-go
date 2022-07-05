@@ -54,10 +54,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	cfg.NumValidators = 2
 
 	s.cfg = cfg
-	s.network = network.New(s.T(), cfg)
+
+	var err error
+	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
+	s.Require().NoError(err)
 
 	kb := s.network.Validators[0].ClientCtx.Keyring
-	_, _, err := kb.NewMnemonic("newAccount", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	_, _, err = kb.NewMnemonic("newAccount", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 
 	account1, _, err := kb.NewMnemonic("newAccount1", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
@@ -107,7 +110,7 @@ func DefaultConfig() network.Config {
 		AppConstructor:    NewAppConstructor(encCfg),
 		GenesisState:      simapp.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     2 * time.Second,
-		ChainID:           "chain-" + tmrand.NewRand().Str(6),
+		ChainID:           "chain-" + tmrand.Str(6),
 		NumValidators:     4,
 		BondDenom:         sdk.DefaultBondDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
@@ -198,7 +201,7 @@ func (s *IntegrationTestSuite) TestLegacyRestErrMessages() {
 			out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, tc.cmd, tc.args)
 			s.Require().NoError(err)
 			var txRes sdk.TxResponse
-			s.Require().NoError(val.ClientCtx.JSONCodec.UnmarshalJSON(out.Bytes(), &txRes))
+			s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &txRes))
 			s.Require().Equal(tc.code, txRes.Code)
 
 			s.Require().NoError(s.network.WaitForNextBlock())
@@ -251,7 +254,7 @@ func (s *IntegrationTestSuite) testQueryIBCTx(txRes sdk.TxResponse, cmd *cobra.C
 	s.Require().NoError(err)
 
 	var getTxRes txtypes.GetTxResponse
-	s.Require().NoError(val.ClientCtx.JSONCodec.UnmarshalJSON(grpcJSON, &getTxRes))
+	s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(grpcJSON, &getTxRes))
 	s.Require().Equal(getTxRes.Tx.Body.Memo, "foobar")
 
 	// generate broadcast only txn.

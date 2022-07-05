@@ -122,6 +122,6 @@ require (
 )
 
 replace (
-	github.com/cosmos/cosmos-sdk => ../cosmos-sdk
+	github.com/cosmos/cosmos-sdk => github.com/vldmkr/cosmos-sdk v0.45.5-0.20220705125705-abb1fdbb2bc6
 	github.com/tendermint/tendermint => github.com/tendermint/tendermint v0.35.6
 )
